@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "version": "0.1.0",
-  "homepage": "https://leoshupinglin.github.io/TKsignup",
+  "homepage": "https://LeoShuPingLin.github.io/tk-signup",
   "private": true,
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",
