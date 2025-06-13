@@ -1,228 +1,185 @@
 import React, { useState } from "react";
-import { Form, Input, Button, Slider, InputNumber, Row, Col, message, Card, Checkbox, Typography } from "antd";
-import { supabase } from "./supabase";
+import { Card, Button } from "antd";
+import SignupForm from "./SignupForm";          // 你原本的報名元件（需支援 defaultName prop）
+import QueryCancelView from "./QueryCancelView"; // 查詢/取消元件（需支援 onGoSignup callback）
 
-const { Text } = Typography;
+// 幹部介面暫時只放佔位
+const ManagerView = () => (
+  <Card
+    style={{
+      maxWidth: 480,
+      margin: "56px auto",
+      borderRadius: 18,
+      textAlign: "center",
+      minHeight: 200,
+    }}
+  >
+    <h2>報名管理</h2>
+    <div>（此功能待實作，可以顯示/管理所有報名資料...）</div>
+  </Card>
+);
+
+const HomePage = ({ onNav }) => (
+  <div
+    style={{
+      minHeight: "100vh",
+      background: "linear-gradient(120deg, #ffe0c2 0%, #f8b500 100%)",
+      padding: "70px 0",
+    }}
+  >
+    <Card
+      bordered={false}
+      style={{
+        maxWidth: 480,
+        margin: "72px auto",
+        borderRadius: 24,
+        boxShadow: "0 8px 30px 0 rgba(168,120,0,0.13)",
+        background: "#fffde7",
+        border: "2.5px solid #ffe082",
+        textAlign: "center"
+      }}
+      bodyStyle={{ padding: "48px 30px 38px 30px" }}
+    >
+      <div style={{ fontSize: 34, fontWeight: 700, color: "#663c00", marginBottom: 32, letterSpacing: 2 }}>
+        神話一三四團國戰
+      </div>
+      <Button
+        type="primary"
+        size="large"
+        block
+        style={{
+          marginBottom: 28,
+          background: "linear-gradient(90deg, #ff9800 0%, #ffb300 100%)",
+          borderColor: "#ffb300",
+          borderRadius: 12,
+          fontSize: 20,
+          fontWeight: "bold"
+        }}
+        onClick={() => onNav("signup")}
+      >
+        國戰報名
+      </Button>
+      <Button
+        type="default"
+        size="large"
+        block
+        style={{
+          marginBottom: 24,
+          background: "#ffecb3",
+          borderRadius: 12,
+          fontSize: 18,
+          fontWeight: "bold",
+          border: "1.5px solid #ffe082"
+        }}
+        onClick={() => onNav("manager")}
+      >
+        報名管理
+      </Button>
+      <Button
+        type="default"
+        size="large"
+        block
+        style={{
+          background: "#ffe082",
+          borderRadius: 12,
+          fontSize: 18,
+          fontWeight: "bold",
+          border: "1.5px solid #ffd54f"
+        }}
+        onClick={() => onNav("query")}
+      >
+        查詢 / 取消報名
+      </Button>
+    </Card>
+  </div>
+);
 
 const App = () => {
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-  const [battleCount, setBattleCount] = useState(1); // 參戰人數
-  const [autoCount, setAutoCount] = useState(0);     // 放置人數
+  const [page, setPage] = useState("home");
+  const [defaultSignupName, setDefaultSignupName] = useState(null);
 
-  // 當天日期，格式 yyyy-MM-dd
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
-  const dd = String(today.getDate()).padStart(2, "0");
-  const formattedDate = `${yyyy}-${mm}-${dd}`;
-
-  const handleBattleChange = (val) => {
-    setBattleCount(val);
-    form.setFieldsValue({ battle_count: val });
-  };
-  const handleAutoChange = (val) => {
-    setAutoCount(val);
-    form.setFieldsValue({ auto_count: val });
+  // 讓查詢頁可以帶名子到報名
+  const goSignupWithName = (name) => {
+    setDefaultSignupName(name);
+    setPage("signup");
   };
 
-  const handleFinish = async (values) => {
-    setLoading(true);
-    // 產生2碼驗證碼
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let cancel_code = "";
-    for (let i = 0; i < 2; i++) {
-      cancel_code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    const payload = {
-      ...values,
-      cancel_code,
-      status: "N",
-      actual_participated: false,
-      applied_at: new Date().toISOString(),
-    };
-    const { error } = await supabase.from("signups").insert([payload]);
-    setLoading(false);
-    if (error) {
-      message.error("報名失敗：" + error.message);
-    } else {
-      message.success(`報名成功！請記下你的驗證碼：${cancel_code}`);
-      form.resetFields();
-      setBattleCount(1);
-      setAutoCount(0);
-    }
+  // 每次進到報名頁，都重設 defaultSignupName 避免上一次殘留
+  const handlePageChange = (nextPage) => {
+    setPage(nextPage);
+    if (nextPage !== "signup") setDefaultSignupName(null);
   };
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(120deg, #ffe0c2 0%, #f8b500 100%)",
-        padding: "40px 0",
-      }}
-    >
-      <Card
-        title={
-          <span
+  let content;
+  switch (page) {
+    case "signup":
+      content = (
+        <>
+          <Button
+            onClick={() => handlePageChange("home")}
             style={{
-              fontSize: 28,
-              fontWeight: 700,
-              color: "#663c00",
-              letterSpacing: 2,
-              textShadow: "1px 2px 8px #fff7, 0 1px 0 #ffebee",
+              position: "fixed",
+              top: 28,
+              left: 28,
+              zIndex: 50,
+              background: "#fff3e0",
+              border: "1.5px solid #ffd54f",
+              borderRadius: 8,
+              fontWeight: 600,
+              fontSize: 17
             }}
-          >
-            國戰報名：{formattedDate}
-          </span>
-        }
-        bordered={false}
-        style={{
-          maxWidth: 500,
-          margin: "48px auto",
-          boxShadow: "0 10px 40px 0 rgba(168,120,0,0.16)",
-          borderRadius: 28,
-          background: "#fffde7",
-          border: "2.5px solid #ffe082",
-        }}
-        bodyStyle={{
-          padding: 36,
-          borderRadius: 28,
-          minHeight: 560,
-        }}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleFinish}
-          initialValues={{
-            name: "",
-            battle_count: 1,
-            auto_count: 0,
-            remark: "",
-            is_self_team: false,
-          }}
-        >
-          <Form.Item
-            label={<span style={{ fontWeight: 500, color: "#784421" }}>主要角色名稱</span>}
-            name="name"
-            rules={[{ required: true, message: "請輸入你的角色名稱" }]}
-          >
-            <Input size="large" style={{ borderRadius: 10 }} />
-          </Form.Item>
-          <Form.Item label={<span style={{ fontWeight: 500, color: "#784421" }}>參戰角色數</span>} required>
-            <Row>
-              <Col flex="auto">
-                <Slider
-                  min={1}
-                  max={10}
-                  value={battleCount}
-                  onChange={handleBattleChange}
-                  style={{ marginRight: 16 }}
-                  trackStyle={{ backgroundColor: "#f57c00", height: 8 }}
-                  handleStyle={{ backgroundColor: "#f57c00" }}  // 只改顏色
-                  railStyle={{ backgroundColor: "#ffe0b2", height: 8 }}
-                />
-              </Col>
-              <Col flex="80px">
-                <InputNumber
-                  min={1}
-                  max={10}
-                  style={{ width: "100%", borderRadius: 8 }}
-                  value={battleCount}
-                  onChange={handleBattleChange}
-                  size="large"
-                />
-              </Col>
-            </Row>
-            <Form.Item
-              name="battle_count"
-              initialValue={1}
-              noStyle
-              rules={[{ required: true }]}
-            >
-              <Input type="hidden" value={battleCount} />
-            </Form.Item>
-          </Form.Item>
-          <Form.Item label={<span style={{ fontWeight: 500, color: "#784421" }}>放置角色數</span>} required>
-            <Row>
-              <Col flex="auto">
-                <Slider
-                  min={0}
-                  max={6}
-                  value={autoCount}
-                  onChange={handleAutoChange}
-                  style={{ marginRight: 16 }}
-                  trackStyle={{ backgroundColor: "#43a047", height: 8 }}
-                  handleStyle={{ backgroundColor: "#43a047" }}  // 只改顏色
-                  railStyle={{ backgroundColor: "#dcedc8", height: 8 }}
-                />
-              </Col>
-              <Col flex="80px">
-                <InputNumber
-                  min={0}
-                  max={6}
-                  style={{ width: "100%", borderRadius: 8 }}
-                  value={autoCount}
-                  onChange={handleAutoChange}
-                  size="large"
-                />
-              </Col>
-            </Row>
-            <Form.Item
-              name="auto_count"
-              initialValue={0}
-              noStyle
-              rules={[{ required: true }]}
-            >
-              <Input type="hidden" value={autoCount} />
-            </Form.Item>
-          </Form.Item>
-          <Form.Item
-            label={<span style={{ fontWeight: 500, color: "#784421" }}>是否自己一組</span>}
-            name="is_self_team"
-            valuePropName="checked"
-          >
-            <Checkbox style={{ fontSize: 16, color: "#6d4c41", fontWeight: 500 }}>
-              是
-            </Checkbox>
-          </Form.Item>
-          <Form.Item
-            label={<span style={{ fontWeight: 500, color: "#784421" }}>備註</span>}
-            name="remark"
-          >
-            <Input.TextArea
-              rows={2}
-              style={{
-                borderRadius: 10,
-                background: "#fffde7",
-                borderColor: "#ffe082"
-              }}
-              placeholder="其他說明 (可選)"
-            />
-          </Form.Item>
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              block
-              style={{
-                background: "linear-gradient(90deg, #ff9800 0%, #ffb300 100%)",
-                borderColor: "#ffb300",
-                borderRadius: 12,
-                fontSize: 18,
-                fontWeight: "bold",
-                boxShadow: "0 2px 12px #ff980044",
-              }}
-              size="large"
-            >
-              送出報名
-            </Button>
-          </Form.Item>
-        </Form>
-      </Card>
-    </div>
-  );
+          >← 回首頁</Button>
+          <SignupForm defaultName={defaultSignupName} />
+        </>
+      );
+      break;
+    case "manager":
+      content = (
+        <>
+          <Button
+            onClick={() => handlePageChange("home")}
+            style={{
+              position: "fixed",
+              top: 28,
+              left: 28,
+              zIndex: 50,
+              background: "#fff3e0",
+              border: "1.5px solid #ffd54f",
+              borderRadius: 8,
+              fontWeight: 600,
+              fontSize: 17
+            }}
+          >← 回首頁</Button>
+          <ManagerView />
+        </>
+      );
+      break;
+    case "query":
+      content = (
+        <>
+          <Button
+            onClick={() => handlePageChange("home")}
+            style={{
+              position: "fixed",
+              top: 28,
+              left: 28,
+              zIndex: 50,
+              background: "#fff3e0",
+              border: "1.5px solid #ffd54f",
+              borderRadius: 8,
+              fontWeight: 600,
+              fontSize: 17
+            }}
+          >← 回首頁</Button>
+          <QueryCancelView onGoSignup={goSignupWithName} />
+        </>
+      );
+      break;
+    default:
+      content = <HomePage onNav={handlePageChange} />;
+  }
+
+  return content;
 };
 
 export default App;
