@@ -1,23 +1,9 @@
 import React, { useState } from "react";
 import { Card, Button } from "antd";
-import SignupForm from "./SignupForm";          // 你原本的報名元件（需支援 defaultName prop）
-import QueryCancelView from "./QueryCancelView"; // 查詢/取消元件（需支援 onGoSignup callback）
-
-// 幹部介面暫時只放佔位
-const ManagerView = () => (
-  <Card
-    style={{
-      maxWidth: 480,
-      margin: "56px auto",
-      borderRadius: 18,
-      textAlign: "center",
-      minHeight: 200,
-    }}
-  >
-    <h2>報名管理</h2>
-    <div>（此功能待實作，可以顯示/管理所有報名資料...）</div>
-  </Card>
-);
+import SignupForm from "./SignupForm";
+import QueryCancelView from "./QueryCancelView";
+// 這裡加進管理元件
+import ManagementView from "./ManagementView"; 
 
 const HomePage = ({ onNav }) => (
   <div
@@ -150,7 +136,8 @@ const App = () => {
               fontSize: 17
             }}
           >← 回首頁</Button>
-          <ManagerView />
+          {/* 這裡改成 ManagementView */}
+          <ManagementView />
         </>
       );
       break;
